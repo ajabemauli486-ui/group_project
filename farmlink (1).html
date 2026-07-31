@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FarmLink — Where farms find hands</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --deep:#1F4D36;
+    --deep-2:#163826;
+    --green:#4C9A2A;
+    --green-light:#8FC65A;
+    --clay:#C97A2B;
+    --clay-2:#A8611D;
+    --gold:#E3B23C;
+    --cream:#FBF7EE;
+    --paper:#F3EEDF;
+    --ink:#14231C;
+    --ink-soft:#3A473F;
+    --line: rgba(20,35,28,0.12);
+    --surface: #ffffff;
+    --shadow: 0 10px 30px -12px rgba(20,35,28,0.25);
+    --radius: 16px;
+  }
+  html.dark{
+    --deep:#8FC65A;
+    --green:#7CBF4A;
+    --cream:#0F1A14;
+    --paper:#122019;
+    --ink:#F3EEDF;
+    --ink-soft:#C7D0C8;
+    --line: rgba(243,238,223,0.14);
+    --surface: #17251d;
+    --shadow: 0 10px 30px -12px rgba(0,0,0,0.6);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    transition:background .25s ease, color .25s ease;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces',serif;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--gold);color:var(--ink);}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 22px;border-radius:999px;border:none;font-weight:600;font-size:15px;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    white-space:nowrap;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--deep);color:var(--cream);}
+  .btn-primary:hover{box-shadow:0 8px 20px -6px rgba(31,77,54,0.5);}
+  .btn-clay{background:var(--clay);color:#fff;}
+  .btn-clay:hover{box-shadow:0 8px 20px -6px rgba(201,122,43,0.55);}
+  .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink);}
+  .btn-sm{padding:9px 16px;font-size:13px;}
+  .btn-block{width:100%;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink-soft);}
+  .field input, .field select, .field textarea{
+    width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--line);
+    background:var(--cream);color:var(--ink);font-size:14.5px;font-family:inherit;
+  }
+  html.dark .field input, html.dark .field select, html.dark .field textarea{background:var(--paper);}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--green);outline-offset:1px;}
+  .field{margin-bottom:14px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr;}}
+
+  .furrows{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  .furrows svg{width:100%;height:100%;display:block;}
+
+  .wage-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;
+    padding:6px 12px 6px 10px;border-radius:8px;
+    background:linear-gradient(180deg,#fff8e6,#fdefc9);
+    border:1.5px dashed var(--clay-2);
+    color:var(--clay-2);
+    position:relative;
+  }
+  html.dark .wage-chip{background:linear-gradient(180deg,#2a2412,#251f0f);color:var(--gold);border-color:var(--gold);}
+  .wage-chip:before{content:'₹';font-weight:700;opacity:.7;}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+    padding:4px 10px;border-radius:999px;background:var(--paper);color:var(--ink-soft);
+    border:1px solid var(--line);
+  }
+  .badge-green{background:rgba(76,154,42,0.14);color:var(--green);border-color:transparent;}
+  .badge-clay{background:rgba(201,122,43,0.14);color:var(--clay-2);border-color:transparent;}
+  html.dark .badge-clay{color:var(--gold);}
+  .badge-gray{background:rgba(58,71,63,0.08);color:var(--ink-soft);}
+
+  .nav{
+    position:sticky;top:0;z-index:40;background:color-mix(in srgb, var(--cream) 88%, transparent);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1180px;margin:0 auto;gap:12px;}
+  .logo{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-weight:700;font-size:21px;}
+  .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--clay);}
+  .nav-links{display:flex;align-items:center;gap:6px;}
+  .nav-links a, .nav-links button{padding:9px 14px;border-radius:999px;font-weight:600;font-size:14px;background:transparent;border:none;color:var(--ink-soft);}
+  .nav-links a.active, .nav-links button.active{background:var(--paper);color:var(--ink);}
+  .nav-links a:hover, .nav-links button:hover{background:var(--paper);color:var(--ink);}
+  .icon-btn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--paper);border:1px solid var(--line);position:relative;flex-shrink:0;}
+  .icon-btn:hover{border-color:var(--ink);}
+
+  #toast-host{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .toast{background:var(--ink);color:var(--cream);padding:12px 20px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 10px 25px rgba(0,0,0,.3);animation:toastIn .25s ease;}
+  html.dark .toast{background:var(--surface);border:1px solid var(--line);}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  .section{padding:64px 0;}
+  @media(max-width:768px){.section{padding:40px 0;}}
+
+  .job-card{padding:20px;display:flex;flex-direction:column;gap:10px;transition:transform .15s ease;cursor:pointer;}
+  .job-card:hover{transform:translateY(-3px);}
+  .stat-card{padding:20px;}
+  .stat-num{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--deep);}
+  html.dark .stat-num{color:var(--green);}
+
+  .sidebar{display:flex;flex-direction:column;gap:4px;}
+  .sidebar a, .sidebar button{
+    display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;
+    font-weight:600;font-size:14.5px;color:var(--ink-soft);background:transparent;border:none;text-align:left;width:100%;
+  }
+  .sidebar a.active, .sidebar button.active{background:var(--deep);color:var(--cream);}
+  .sidebar a:hover:not(.active), .sidebar button:hover:not(.active){background:var(--paper);}
+
+  .divider-furrow{height:26px;position:relative;overflow:hidden;}
+
+  input[type=checkbox]{accent-color:var(--green);width:16px;height:16px;}
+
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+
+  .fade-up{animation:fadeUp .5s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+  .skeleton-tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--clay-2);font-weight:700;}
+  html.dark .skeleton-tag{color:var(--gold);}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(15,26,20,0.55);backdrop-filter:blur(2px);z-index:80;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px;}
+  .modal{max-width:640px;width:100%;padding:28px;position:relative;}
+  .modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:var(--paper);border:none;display:flex;align-items:center;justify-content:center;font-size:18px;}
+
+  .progress-track{height:8px;border-radius:99px;background:var(--paper);overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:99px;}
+
+  .avatar{width:42px;height:42px;border-radius:50%;background:var(--deep);color:var(--cream);display:flex;align-items:center;justify-content:center;font-weight:700;font-family:'Fraunces',serif;flex-shrink:0;}
+
+  .empty-state{padding:50px 20px;text-align:center;color:var(--ink-soft);}
+  .empty-state .display{font-size:20px;margin-bottom:6px;}
+
+  footer{border-top:1px solid var(--line);padding:40px 0 26px;margin-top:40px;}
+
+  .dash-layout{display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:start;}
+  @media(max-width:860px){.dash-layout{grid-template-columns:1fr;}}
+  .app-select{cursor:pointer;}
+  .tag-pill{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:600;background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);cursor:pointer;}
+  .tag-pill.on{background:var(--deep);color:var(--cream);border-color:var(--deep);}
+  html.dark .tag-pill.on{background:var(--green);color:var(--deep-2);}
+  .hero-card{position:relative;overflow:hidden;padding:56px 40px;border-radius:24px;background:linear-gradient(160deg,var(--deep),var(--deep-2));color:var(--cream);}
+  .hero-card h1{color:var(--cream);}
+  .hero-card .sub{color:rgba(251,247,238,0.8);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast-host"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const GEO = {
+  "Maharashtra": {
+    "Niphad": ["Pimpalgaon","Ozar","Chandori"],
+    "Baramati": ["Malegaon Bk","Wadgaon Nimbalkar","Katewadi"],
+    "Karad": ["Kale","Songaon","Vinaydongar"]
+  },
+  "Punjab": {
+    "Ludhiana East": ["Sahnewal","Dehlon","Jugiana"],
+    "Patiala": ["Rajpura","Ghanaur","Samana"]
+  },
+  "Karnataka": {
+    "Mysuru Taluk": ["Hootagalli","Bogadi","Kadakola"],
+    "Belagavi": ["Kakati","Sambra","Machhe"]
+  },
+  "Uttar Pradesh": {
+    "Meerut": ["Kharkhauda","Sardhana","Daurala"],
+    "Bareilly": ["Bisauli","Faridpur","Aonla"]
+  }
+};
+const CATEGORIES = ["Sugarcane Cutting","Cotton Picking","Onion Harvesting","Rice Plantation","Wheat Harvesting","Tractor Driver","Drip Irrigation","Dairy Work","Poultry Work","Farm Helper"];
+
+let JOBS = [
+  {id:1, title:"Sugarcane cutters needed for 5 acre field", category:"Sugarcane Cutting", state:"Maharashtra", district:"Niphad", taluka:"Niphad", village:"Pimpalgaon", wage:480, workers:6, start:"2026-08-05", end:"2026-08-20", hours:"7am – 4pm", food:true, stay:true, contact:"98765 43210", desc:"Looking for experienced sugarcane cutters for harvest season. Tools provided on site. Payment every Friday, no delays.", farmer:"Vikram Patil", posted:"3 days ago", status:"active"},
+  {id:2, title:"Cotton pickers for organic farm", category:"Cotton Picking", state:"Punjab", district:"Ludhiana East", taluka:"Ludhiana East", village:"Sahnewal", wage:420, workers:10, start:"2026-08-10", end:"2026-09-10", hours:"6:30am – 2pm", food:true, stay:false, contact:"98123 45670", desc:"Organic cotton field, gentle picking required to protect the crop. Prior experience preferred but not required.", farmer:"Harpreet Singh", posted:"1 day ago", status:"active"},
+  {id:3, title:"Onion harvest — daily wage, immediate start", category:"Onion Harvesting", state:"Maharashtra", district:"Baramati", taluka:"Baramati", village:"Malegaon Bk", wage:400, workers:4, start:"2026-07-29", end:"2026-08-08", hours:"7am – 3pm", food:false, stay:false, contact:"99876 54321", desc:"Small family farm, friendly working environment. Tea and lunch break provided, food not included.", farmer:"Suresh More", posted:"5 hours ago", status:"active"},
+  {id:4, title:"Tractor driver for ploughing season", category:"Tractor Driver", state:"Karnataka", district:"Mysuru Taluk", taluka:"Mysuru Taluk", village:"Hootagalli", wage:650, workers:1, start:"2026-08-01", end:"2026-08-15", hours:"Flexible", food:true, stay:true, contact:"97654 32109", desc:"Need an experienced tractor driver, must know how to operate rotavator attachment. Accommodation on farm provided.", farmer:"K. Nagaraj", posted:"2 days ago", status:"active"},
+  {id:5, title:"Rice plantation labour, group welcome", category:"Rice Plantation", state:"Karnataka", district:"Belagavi", taluka:"Belagavi", village:"Kakati", wage:390, workers:12, start:"2026-08-12", end:"2026-08-25", hours:"6am – 1pm", food:true, stay:false, contact:"96543 21098", desc:"Monsoon paddy transplantation. Groups of 4-5 preferred, will coordinate transport from village center.", farmer:"Basavaraj Patil", posted:"6 days ago", status:"active"},
+  {id:6, title:"Wheat harvesting — combine support crew", category:"Wheat Harvesting", state:"Uttar Pradesh", district:"Meerut", taluka:"Meerut", village:"Kharkhauda", wage:410, workers:8, start:"2026-08-18", end:"2026-08-28", hours:"6am – 2pm", food:true, stay:false, contact:"95432 10987", desc:"Support crew for combine harvester operation — bagging and loading. Steady work with reliable payment.", farmer:"Ramesh Chaudhary", posted:"1 week ago", status:"active"},
+  {id:7, title:"Dairy farm helper — daily milking & feed", category:"Dairy Work", state:"Uttar Pradesh", district:"Bareilly", taluka:"Bisauli", village:"Bisauli", wage:350, workers:2, start:"2026-07-30", end:"2026-12-31", hours:"5am – 9am, 5pm – 8pm", food:true, stay:true, contact:"94321 09876", desc:"Long-term position at a 15-buffalo dairy. Experience with milking machines a plus but will train the right person.", farmer:"Om Prakash Yadav", posted:"4 days ago", status:"active"},
+  {id:8, title:"Drip irrigation setup — 3 day project", category:"Drip Irrigation", state:"Maharashtra", district:"Karad", taluka:"Karad", village:"Kale", wage:500, workers:3, start:"2026-08-03", end:"2026-08-05", hours:"8am – 5pm", food:false, stay:false, contact:"93210 98765", desc:"Installing drip irrigation across 2 acres of sugarcane. Prior pipe-fitting experience required.", farmer:"Anil Deshmukh", posted:"12 hours ago", status:"active"}
+];
+
+let currentUser = null; // {role:'farmer'|'worker', name, village, taluka, district, state}
+let applications = []; // {id, jobId, workerName, status:'pending'|'accepted'|'rejected', appliedAt}
+let savedJobIds = new Set();
+let notifications = [
+  {id:1, text:"New nearby job posted: Onion Harvest in Malegaon Bk", time:"5h ago", read:false},
+  {id:2, text:"Welcome to FarmLink — complete your profile to get better job matches", time:"1d ago", read:false}
+];
+let appIdCounter = 1;
+let jobIdCounter = 9;
+
+/* ============================= STATE / ROUTER ============================= */
+let state = { view:"landing", params:{} };
+let workerFilters = { q:"", category:"", state:"", wage:1000 };
+let jobDraft = null;
+let detailJobId = null;
+let applyJobId = null;
+let notifPanelOpen = false;
+
+function navigate(view, params={}){ state.view = view; state.params = params; notifPanelOpen=false; window.scrollTo({top:0,behavior:"smooth"}); render(); }
+function toast(msg){
+  const host = document.getElementById("toast-host");
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg;
+  host.appendChild(el);
+  setTimeout(()=>{ el.style.opacity="0"; el.style.transition="opacity .3s"; setTimeout(()=>el.remove(),300); }, 2600);
+}
+function toggleTheme(){
+  document.documentElement.classList.toggle("dark");
+  render();
+}
+function addNotification(text){ notifications.unshift({id:Date.now(), text, time:"just now", read:false}); }
+function fmtDate(d){ const dt=new Date(d); return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
+function initials(name){ return name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase(); }
+
+/* ============================= SVG FURROWS ============================= */
+function furrowSVG(opacity=0.35, stroke="var(--green-light)"){
+  let paths = "";
+  for(let i=0;i<9;i++){
+    const y = 40 + i*46;
+    paths += `<path d="M -50 ${y} Q 300 ${y-60}, 650 ${y} T 1350 ${y}" stroke="${stroke}" stroke-width="2" fill="none" opacity="${opacity - i*0.02}"/>`;
+  }
+  return `<svg viewBox="0 0 1200 460" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+}
+
+/* ============================= ICONS ============================= */
+function icon(name){
+  const icons = {
+    sun:'<path d="M12 3v2M12 19v2M5 5l1.4 1.4M17.6 17.6L19 19M3 12h2M19 12h2M5 19l1.4-1.4M17.6 6.4L19 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/>',
+    moon:'<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+    bell:'<path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" fill="none"/>',
+    menu:'<path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="1.6"/>',
+    search:'<circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    check:'<path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    x:'<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    clock:'<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    users:'<circle cx="9" cy="8.5" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M15.5 6.2a3 3 0 0 1 0 5.9M19 19c0-2.6-1.9-4.6-4.3-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+    plus:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    bookmark:'<path d="M6 4.5h12v15l-6-4-6 4v-15Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/>',
+    briefcase:'<rect x="3.5" y="7.5" width="17" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5" stroke="currentColor" stroke-width="1.6" fill="none"/>',
+    food:'<path d="M5 3v8M8 3v8M5 7h3M6.5 11v10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 3c-1.5 0-3 1.5-3 4s1.5 4 3 4V21" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+    bed:'<path d="M3 19v-7a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 12h7a2 2 0 0 1 2 2v5" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M3 19v2M21 19v2M3 14h18" stroke="currentColor" stroke-width="1.6"/><circle cx="6.2" cy="12" r="1.3" stroke="currentColor" stroke-width="1.4"/>',
+    phone:'<rect x="6" y="2.5" width="12" height="19" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M10 19h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    trash:'<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  };
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none">${icons[name]||""}</svg>`;
+}
+
+/* ============================= NAV ============================= */
+function navBar(){
+  const unread = notifications.filter(n=>!n.read).length;
+  let roleLinks = "";
+  if(currentUser){
+    roleLinks = currentUser.role==="worker"
+      ? `<button onclick="navigate('workerDashboard')" class="${state.view==='workerDashboard'?'active':''}">Dashboard</button>
+         <button onclick="navigate('browseJobs')" class="${state.view==='browseJobs'?'active':''}">Browse jobs</button>`
+      : `<button onclick="navigate('farmerDashboard')" class="${state.view==='farmerDashboard'?'active':''}">Dashboard</button>
+         <button onclick="navigate('postJob')" class="${state.view==='postJob'?'active':''}">Post a job</button>`;
+  }
+  const isDark = document.documentElement.classList.contains("dark");
+  return `
+  <div class="nav">
+    <div class="nav-inner">
+      <a href="#" onclick="navigate('landing');return false;" class="logo"><span class="dot"></span>FarmLink</a>
+      <div class="nav-links" style="display:flex;">
+        ${roleLinks}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">${icon(isDark?'sun':'moon')}</button>
+        ${currentUser?`
+        <div style="position:relative;">
+          <button class="icon-btn" onclick="toggleNotifPanel(event)">${icon('bell')}
+            ${unread>0?`<span style="position:absolute;top:-2px;right:-2px;background:var(--clay);color:#fff;font-size:10px;font-weight:700;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;">${unread}</span>`:""}
+          </button>
+          ${notifPanelOpen?`
+          <div id="notif-panel" class="card" style="display:block;position:absolute;right:0;top:48px;width:300px;z-index:60;">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--line);font-weight:700;display:flex;justify-content:space-between;align-items:center;">
+              Notifications
+              ${unread>0?`<button class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:11px;" onclick="markAllRead(event)">Mark all read</button>`:""}
+            </div>
+            <div style="max-height:320px;overflow:auto;">
+            ${notifications.length? notifications.map(n=>`
+              <div style="padding:12px 16px;border-bottom:1px solid var(--line);font-size:13.5px;${n.read?'opacity:.6;':''}">
+                ${n.text}<div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">${n.time}</div>
+              </div>`).join("") : `<div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:13px;">No notifications yet</div>`}
+            </div>
+          </div>`:""}
+        </div>
+        <div class="avatar" title="${currentUser.name}" style="width:36px;height:36px;font-size:14px;">${initials(currentUser.name)}</div>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+        `:`
+        <button class="btn btn-ghost btn-sm" onclick="navigate('auth',{role:'worker',mode:'login'})">Log in</button>
+        <button class="btn btn-primary btn-sm" onclick="navigate('auth',{role:'worker',mode:'register'})">Join FarmLink</button>
+        `}
+      </div>
+    </div>
+  </div>`;
+}
+function toggleNotifPanel(e){
+  e.stopPropagation();
+  notifPanelOpen = !notifPanelOpen;
+  render();
+  if(notifPanelOpen) setTimeout(()=>document.addEventListener('click', closeNotifOnce, {once:true}), 0);
+}
+function closeNotifOnce(){ if(notifPanelOpen){ notifPanelOpen=false; render(); } }
+function markAllRead(e){ e.stopPropagation(); notifications.forEach(n=>n.read=true); render(); }
+
+function footerHTML(){
+  return `
+  <footer>
+    <div class="wrap" style="display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center;">
+      <div class="logo" style="font-size:17px;"><span class="dot"></span>FarmLink</div>
+      <div style="font-size:13px;color:var(--ink-soft);">Connecting farms and hands across Maharashtra, Punjab, Karnataka &amp; Uttar Pradesh.</div>
+      <div style="font-size:13px;color:var(--ink-soft);">© 2026 FarmLink</div>
+    </div>
+  </footer>`;
+}
+
+/* ============================= LANDING ============================= */
+function landingView(){
+  const totalJobs = JOBS.filter(j=>j.status==='active').length;
+  const totalWorkers = JOBS.reduce((s,j)=>s+j.workers,0);
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:44px;">
+    <div class="hero-card fade-up">
+      <div class="furrows">${furrowSVG(0.14,'#ffffff')}</div>
+      <div style="position:relative;max-width:620px;">
+        <span class="badge" style="background:rgba(255,255,255,0.14);color:var(--cream);border-color:rgba(255,255,255,0.25);">Harvest season is here</span>
+        <h1 style="font-size:44px;line-height:1.08;margin:16px 0 14px;">Where farms find hands, and hands find fair work.</h1>
+        <p class="sub" style="font-size:16.5px;line-height:1.6;margin:0 0 26px;">Post a job in two minutes or browse daily-wage work near your village — sugarcane, cotton, paddy, dairy and more, with the wage shown upfront.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-clay" onclick="navigate('auth',{role:'worker',mode:'register'})">${icon('search')} Find work</button>
+          <button class="btn" style="background:var(--cream);color:var(--deep);" onclick="navigate('auth',{role:'farmer',mode:'register'})">${icon('plus')} Post a job</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-bottom:20px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div class="card stat-card"><div class="stat-num">${totalJobs}</div><div style="color:var(--ink-soft);font-size:14px;font-weight:600;">Open jobs right now</div></div>
+        <div class="card stat-card"><div class="stat-num">${totalWorkers}+</div><div style="color:var(--ink-soft);font-size:14px;font-weight:600;">Workers needed this month</div></div>
+        <div class="card stat-card"><div class="stat-num">4</div><div style="color:var(--ink-soft);font-size:14px;font-weight:600;">States covered</div></div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;">
+        <h2 style="font-size:26px;margin:0;">Work happening this week</h2>
+        <button class="btn btn-ghost btn-sm" onclick="navigate('auth',{role:'worker',mode:'register'})">See all jobs →</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        ${JOBS.slice(0,3).map(j=>jobCardHTML(j,false)).join("")}
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:8px;">
+      <h2 style="font-size:26px;margin:0 0 18px;">Browse by kind of work</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        ${CATEGORIES.map(c=>`<span class="tag-pill">${c}</span>`).join("")}
+      </div>
+    </div>
+  </div>
+  ${footerHTML()}
+  `;
+}
+
+/* ============================= JOB CARD ============================= */
+function jobCardHTML(j, actionable=true){
+  const applied = applications.find(a=>a.jobId===j.id && currentUser && a.workerName===currentUser.name);
+  const saved = savedJobIds.has(j.id);
+  return `
+  <div class="card job-card fade-up" onclick="${actionable?`openJobDetail(${j.id})`:`navigate('auth',{role:'worker',mode:'register'})`}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+      <span class="badge badge-green">${j.category}</span>
+      <span class="wage-chip">${j.wage}/day</span>
+    </div>
+    <h3 style="font-size:17px;margin:2px 0 0;line-height:1.35;">${j.title}</h3>
+    <div style="display:flex;align-items:center;gap:6px;color:var(--ink-soft);font-size:13px;">${icon('pin')} ${j.village}, ${j.taluka}, ${j.district}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;">
+      <span class="badge badge-gray">${icon('users')} ${j.workers} needed</span>
+      <span class="badge badge-gray">${icon('clock')} ${fmtDate(j.start)} – ${fmtDate(j.end)}</span>
+      ${j.food?`<span class="badge badge-clay">${icon('food')} Food</span>`:""}
+      ${j.stay?`<span class="badge badge-clay">${icon('bed')} Stay</span>`:""}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+      <span style="font-size:12px;color:var(--ink-soft);">Posted ${j.posted}</span>
+      ${actionable?`<span style="font-size:13px;font-weight:700;color:${applied?'var(--green)':'var(--deep)'};">${applied?'Applied ✓':'View details →'}</span>`:`<span style="font-size:13px;font-weight:700;color:var(--deep);">View details →</span>`}
+    </div>
+  </div>`;
+}
+
+/* ============================= AUTH ============================= */
+function authView(){
+  const role = state.params.role || 'worker';
+  const mode = state.params.mode || 'login';
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:44px;padding-bottom:60px;display:flex;justify-content:center;">
+    <div class="card fade-up" style="max-width:460px;width:100%;padding:32px;">
+      <div style="display:flex;gap:8px;margin-bottom:22px;background:var(--paper);padding:5px;border-radius:12px;">
+        <button class="btn btn-sm ${role==='worker'?'btn-primary':''}" style="flex:1;background:${role==='worker'?'':'transparent'};color:${role==='worker'?'':'var(--ink-soft)'};" onclick="navigate('auth',{role:'worker',mode:'${mode}'})">I need work</button>
+        <button class="btn btn-sm ${role==='farmer'?'btn-primary':''}" style="flex:1;background:${role==='farmer'?'':'transparent'};color:${role==='farmer'?'':'var(--ink-soft)'};" onclick="navigate('auth',{role:'farmer',mode:'${mode}'})">I need workers</button>
+      </div>
+      <h2 style="font-size:24px;margin:0 0 6px;">${mode==='login'?'Welcome back':(role==='worker'?'Find daily-wage work':'Post your first job')}</h2>
+      <p style="color:var(--ink-soft);font-size:14px;margin:0 0 22px;">${mode==='login'?'Log in to see your applications and jobs.':'Takes less than a minute — no documents needed.'}</p>
+      <form onsubmit="return handleAuth(event,'${role}','${mode}')">
+        <div class="field"><label>Full name</label><input required name="name" placeholder="e.g. Ganesh Kadam"></div>
+        <div class="field"><label>Phone number</label><input required name="phone" placeholder="10-digit mobile number" pattern="[0-9 ]{10,13}"></div>
+        ${mode==='register'?`
+        <div class="grid2">
+          <div class="field"><label>State</label>
+            <select required name="state" onchange="updateDistrictOptions(this)">
+              <option value="">Select state</option>
+              ${Object.keys(GEO).map(s=>`<option value="${s}">${s}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field"><label>District</label>
+            <select required name="district" id="district-select" onchange="updateVillageOptions(this)"><option value="">Select state first</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Village</label>
+          <select required name="village" id="village-select"><option value="">Select district first</option></select>
+        </div>
+        ${role==='worker'?`
+        <div class="field"><label>Type of work you do</label>
+          <select name="skill"><option value="">Any / general labour</option>${CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>
+        </div>`:``}
+        `:``}
+        <button class="btn btn-primary btn-block" style="margin-top:6px;" type="submit">${mode==='login'?'Log in':'Create account'}</button>
+      </form>
+      <p style="text-align:center;font-size:13.5px;color:var(--ink-soft);margin-top:16px;">
+        ${mode==='login'?`New here? <a href="#" style="color:var(--deep);font-weight:700;" onclick="navigate('auth',{role:'${role}',mode:'register'});return false;">Create an account</a>`
+        :`Already registered? <a href="#" style="color:var(--deep);font-weight:700;" onclick="navigate('auth',{role:'${role}',mode:'login'});return false;">Log in</a>`}
+      </p>
+    </div>
+  </div>
+  ${footerHTML()}
+  `;
+}
+function updateDistrictOptions(sel){
+  const st = sel.value;
+  const distSel = document.getElementById('district-select');
+  const villSel = document.getElementById('village-select');
+  const districts = GEO[st] ? Object.keys(GEO[st]) : [];
+  distSel.innerHTML = `<option value="">Select district</option>` + districts.map(d=>`<option value="${d}">${d}</option>`).join("");
+  villSel.innerHTML = `<option value="">Select district first</option>`;
+}
+function updateVillageOptions(sel){
+  const form = sel.closest('form');
+  const st = form.state.value;
+  const dist = sel.value;
+  const villages = (GEO[st] && GEO[st][dist]) ? GEO[st][dist] : [];
+  document.getElementById('village-select').innerHTML = `<option value="">Select village</option>` + villages.map(v=>`<option value="${v}">${v}</option>`).join("");
+}
+function handleAuth(e, role, mode){
+  e.preventDefault();
+  const f = e.target;
+  const name = f.name.value.trim();
+  if(!name) return false;
+  currentUser = {
+    role,
+    name,
+    phone: f.phone.value.trim(),
+    state: f.state ? f.state.value : (mode==='login' ? Object.keys(GEO)[0] : ''),
+    district: f.district ? f.district.value : '',
+    taluka: f.district ? f.district.value : '',
+    village: f.village ? f.village.value : '',
+    skill: f.skill ? f.skill.value : ''
+  };
+  toast(`Welcome, ${currentUser.name.split(' ')[0]}!`);
+  navigate(role==='worker' ? 'workerDashboard' : 'farmerDashboard');
+  return false;
+}
+function logout(){
+  currentUser = null;
+  toast("Logged out");
+  navigate('landing');
+}
+
+/* ============================= WORKER DASHBOARD ============================= */
+function workerSidebar(active){
+  return `
+  <div class="card sidebar" style="padding:10px;">
+    <button class="${active==='overview'?'active':''}" onclick="navigate('workerDashboard')">${icon('briefcase')} Overview</button>
+    <button class="${active==='browse'?'active':''}" onclick="navigate('browseJobs')">${icon('search')} Browse jobs</button>
+    <button class="${active==='saved'?'active':''}" onclick="navigate('savedJobs')">${icon('bookmark')} Saved jobs</button>
+  </div>`;
+}
+function workerDashboard(){
+  const myApps = applications.filter(a=>a.workerName===currentUser.name);
+  const recommended = JOBS.filter(j=>j.status==='active' && (!currentUser.skill || j.category===currentUser.skill)).slice(0,3);
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:36px;padding-bottom:60px;">
+    <h1 style="font-size:28px;margin:0 0 4px;">Namaste, ${currentUser.name.split(' ')[0]}</h1>
+    <p style="color:var(--ink-soft);margin:0 0 26px;">${currentUser.village?`${currentUser.village}, ${currentUser.district}`:'Complete your profile for better matches.'}</p>
+    <div class="dash-layout">
+      ${workerSidebar('overview')}
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
+          <div class="card stat-card"><div class="stat-num">${myApps.length}</div><div style="color:var(--ink-soft);font-size:13.5px;font-weight:600;">Applications sent</div></div>
+          <div class="card stat-card"><div class="stat-num">${myApps.filter(a=>a.status==='accepted').length}</div><div style="color:var(--ink-soft);font-size:13.5px;font-weight:600;">Accepted</div></div>
+          <div class="card stat-card"><div class="stat-num">${savedJobIds.size}</div><div style="color:var(--ink-soft);font-size:13.5px;font-weight:600;">Jobs saved</div></div>
+        </div>
+
+        <h2 style="font-size:19px;margin:0 0 14px;">Recommended for you</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:32px;">
+          ${recommended.length ? recommended.map(j=>jobCardHTML(j)).join("") : `<div class="empty-state" style="grid-column:1/-1;">No matches yet — try browsing all jobs.</div>`}
+        </div>
+
+        <h2 style="font-size:19px;margin:0 0 14px;">Your applications</h2>
+        ${myApps.length ? `
+        <div class="card" style="overflow:hidden;">
+          ${myApps.slice().reverse().map(a=>{
+            const j = JOBS.find(jj=>jj.id===a.jobId);
+            if(!j) return '';
+            const color = a.status==='accepted'?'var(--green)':a.status==='rejected'?'var(--clay-2)':'var(--ink-soft)';
+            return `<div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div>
+                <div style="font-weight:700;font-size:14.5px;">${j.title}</div>
+                <div style="font-size:12.5px;color:var(--ink-soft);">${j.village}, ${j.district} · Applied ${a.appliedAt}</div>
+              </div>
+              <span class="badge" style="color:${color};border-color:${color};background:transparent;text-transform:capitalize;">${a.status}</span>
+            </div>`;
+          }).join("")}
+        </div>` : `<div class="card empty-state"><div class="display">No applications yet</div>Browse open jobs and apply — it takes one tap.</div>`}
+      </div>
+    </div>
+  </div>
+  ${footerHTML()}
+  ${jobDetailModal()}
+  ${applyModal()}
+  `;
+}
+
+function savedJobsView(){
+  const saved = JOBS.filter(j=>savedJobIds.has(j.id));
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:36px;padding-bottom:60px;">
+    <h1 style="font-size:28px;margin:0 0 24px;">Saved jobs</h1>
+    <div class="dash-layout">
+      ${workerSidebar('saved')}
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+          ${saved.length ? saved.map(j=>jobCardHTML(j)).join("") : `<div class="empty-state card" style="grid-column:1/-1;"><div class="display">Nothing saved yet</div>Tap the bookmark on any job to keep it here.</div>`}
+        </div>
+      </div>
+    </div>
+  </div>
+  ${footerHTML()}
+  ${jobDetailModal()}
+  ${applyModal()}
+  `;
+}
+
+/* ============================= BROWSE JOBS ============================= */
+function browseJobsView(){
+  let list = JOBS.filter(j=>j.status==='active');
+  if(workerFilters.q) list = list.filter(j=> (j.title+j.category+j.village+j.district).toLowerCase().includes(workerFilters.q.toLowerCase()));
+  if(workerFilters.category) list = list.filter(j=>j.category===workerFilters.category);
+  if(workerFilters.state) list = list.filter(j=>j.state===workerFilters.state);
+  list = list.filter(j=>j.wage<=workerFilters.wage);
+
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:36px;padding-bottom:60px;">
+    <h1 style="font-size:28px;margin:0 0 20px;">Browse jobs</h1>
+    <div class="card" style="padding:18px;margin-bottom:24px;">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.3fr;gap:12px;align-items:end;">
+        <div class="field" style="margin-bottom:0;"><label>Search</label><input placeholder="Job title, village, district…" value="${workerFilters.q}" oninput="workerFilters.q=this.value;render()"></div>
+        <div class="field" style="margin-bottom:0;"><label>Category</label>
+          <select onchange="workerFilters.category=this.value;render()">
+            <option value="">All categories</option>
+            ${CATEGORIES.map(c=>`<option value="${c}" ${workerFilters.category===c?'selected':''}>${c}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;"><label>State</label>
+          <select onchange="workerFilters.state=this.value;render()">
+            <option value="">All states</option>
+            ${Object.keys(GEO).map(s=>`<option value="${s}" ${workerFilters.state===s?'selected':''}>${s}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;"><label>Max wage: <span class="mono">₹${workerFilters.wage}/day</span></label>
+          <input type="range" min="200" max="1000" step="10" value="${workerFilters.wage}" oninput="workerFilters.wage=parseInt(this.value);render()" style="width:100%;accent-color:var(--green);">
+        </div>
+      </div>
+    </div>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;">${list.length} job${list.length===1?'':'s'} found</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+      ${list.length ? list.map(j=>jobCardHTML(j)).join("") : `<div class="empty-state card" style="grid-column:1/-1;"><div class="display">No jobs match your filters</div>Try widening the wage range or clearing a filter.</div>`}
+    </div>
+  </div>
+  ${footerHTML()}
+  ${jobDetailModal()}
+  ${applyModal()}
+  `;
+}
+
+/* ============================= JOB DETAIL MODAL ============================= */
+function openJobDetail(id){ if(!currentUser){ navigate('auth',{role:'worker',mode:'register'}); return; } detailJobId = id; render(); }
+function closeJobDetail(){ detailJobId = null; render(); }
+function jobDetailModal(){
+  if(!detailJobId) return "";
+  const j = JOBS.find(x=>x.id===detailJobId);
+  if(!j) return "";
+  const applied = applications.find(a=>a.jobId===j.id && a.workerName===currentUser.name);
+  const saved = savedJobIds.has(j.id);
+  return `
+  <div class="modal-backdrop" onclick="if(event.target===this)closeJobDetail()">
+    <div class="card modal fade-up">
+      <button class="modal-close" onclick="closeJobDetail()">${icon('x')}</button>
+      <span class="badge badge-green">${j.category}</span>
+      <h2 style="font-size:22px;margin:12px 0 4px;">${j.title}</h2>
+      <div style="display:flex;align-items:center;gap:6px;color:var(--ink-soft);font-size:14px;margin-bottom:14px;">${icon('pin')} ${j.village}, ${j.taluka}, ${j.district}, ${j.state}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <span class="wage-chip">${j.wage}/day</span>
+        <span class="badge badge-gray">${icon('users')} ${j.workers} workers needed</span>
+        <span class="badge badge-gray">${icon('clock')} ${j.hours}</span>
+        ${j.food?`<span class="badge badge-clay">${icon('food')} Food included</span>`:""}
+        ${j.stay?`<span class="badge badge-clay">${icon('bed')} Stay provided</span>`:""}
+      </div>
+      <p style="line-height:1.6;font-size:14.5px;color:var(--ink-soft);margin-bottom:14px;">${j.desc}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;font-size:13.5px;">
+        <div><div class="skeleton-tag">Duration</div>${fmtDate(j.start)} → ${fmtDate(j.end)}</div>
+        <div><div class="skeleton-tag">Posted by</div>${j.farmer}</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        ${applied
+          ? `<button class="btn btn-ghost btn-block" disabled>${icon('check')} Application sent — ${applied.status}</button>`
+          : `<button class="btn btn-clay" style="flex:1;" onclick="openApply(${j.id})">Apply now</button>`}
+        <button class="btn btn-ghost" onclick="toggleSave(${j.id})">${icon('bookmark')} ${saved?'Saved':'Save'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleSave(id){
+  if(savedJobIds.has(id)) savedJobIds.delete(id); else savedJobIds.add(id);
+  render();
+}
+
+/* ============================= APPLY MODAL ============================= */
+function openApply(id){ applyJobId = id; detailJobId = null; render(); }
+function closeApply(){ applyJobId = null; render(); }
+function applyModal(){
+  if(!applyJobId) return "";
+  const j = JOBS.find(x=>x.id===applyJobId);
+  if(!j) return "";
+  return `
+  <div class="modal-backdrop" onclick="if(event.target===this)closeApply()">
+    <div class="card modal fade-up" style="max-width:440px;">
+      <button class="modal-close" onclick="closeApply()">${icon('x')}</button>
+      <span class="skeleton-tag">Applying to</span>
+      <h2 style="font-size:19px;margin:6px 0 18px;">${j.title}</h2>
+      <div class="card" style="padding:14px;margin-bottom:18px;background:var(--paper);border:none;box-shadow:none;">
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;"><span style="color:var(--ink-soft);">Wage</span><span class="mono" style="font-weight:700;">₹${j.wage}/day</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-top:6px;"><span style="color:var(--ink-soft);">Location</span><span>${j.village}, ${j.district}</span></div>
+      </div>
+      <form onsubmit="return submitApplication(event,${j.id})">
+        <div class="field"><label>Message to farmer (optional)</label><textarea name="msg" rows="3" placeholder="e.g. I have 4 years experience with sugarcane cutting, available from day one."></textarea></div>
+        <button class="btn btn-clay btn-block" type="submit">Send application</button>
+      </form>
+    </div>
+  </div>`;
+}
+function submitApplication(e, jobId){
+  e.preventDefault();
+  applications.push({id:appIdCounter++, jobId, workerName:currentUser.name, status:'pending', appliedAt:'just now'});
+  toast("Application sent!");
+  applyJobId = null;
+  render();
+  return false;
+}
+
+/* ============================= FARMER DASHBOARD ============================= */
+function farmerSidebar(active){
+  return `
+  <div class="card sidebar" style="padding:10px;">
+    <button class="${active==='overview'?'active':''}" onclick="navigate('farmerDashboard')">${icon('briefcase')} Overview</button>
+    <button class="${active==='post'?'active':''}" onclick="navigate('postJob')">${icon('plus')} Post a job</button>
+  </div>`;
+}
+function farmerDashboard(){
+  const myJobs = JOBS.filter(j=>j.farmer===currentUser.name);
+  const jobsToShow = myJobs.length ? myJobs : JOBS.slice(0,3); // demo fallback so dashboard isn't empty
+  const jobIds = new Set(jobsToShow.map(j=>j.id));
+  const relatedApps = applications.filter(a=>jobIds.has(a.jobId));
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:36px;padding-bottom:60px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+      <div>
+        <h1 style="font-size:28px;margin:0 0 4px;">Welcome back, ${currentUser.name.split(' ')[0]}</h1>
+        <p style="color:var(--ink-soft);margin:0;">${currentUser.village?`${currentUser.village}, ${currentUser.district}`:''}</p>
+      </div>
+      <button class="btn btn-clay" onclick="navigate('postJob')">${icon('plus')} Post a job</button>
+    </div>
+    <div class="dash-layout">
+      ${farmerSidebar('overview')}
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
+          <div class="card stat-card"><div class="stat-num">${jobsToShow.length}</div><div style="color:var(--ink-soft);font-size:13.5px;font-weight:600;">Jobs posted</div></div>
+          <div class="card stat-card"><div class="stat-num">${relatedApps.length}</div><div style="color:var(--ink-soft);font-size:13.5px;font-weight:600;">Applications received</div></div>
+          <div class="card stat-card"><div class="stat-num">${relatedApps.filter(a=>a.status==='accepted').length}</div><div style="color:var(--ink-soft);font-size:13.5px;font-weight:600;">Workers confirmed</div></div>
+        </div>
+
+        <h2 style="font-size:19px;margin:0 0 14px;">Your job posts</h2>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:32px;">
+          ${jobsToShow.map(j=>{
+            const apps = applications.filter(a=>a.jobId===j.id);
+            const filled = apps.filter(a=>a.status==='accepted').length;
+            const pct = Math.min(100, Math.round((filled/j.workers)*100));
+            return `
+            <div class="card" style="padding:18px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                <div>
+                  <div style="font-weight:700;font-size:15.5px;">${j.title}</div>
+                  <div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">${j.village}, ${j.district} · ₹${j.wage}/day · ${apps.length} application${apps.length===1?'':'s'}</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="navigate('manageApplicants',{jobId:${j.id}})">Manage applicants →</button>
+              </div>
+              <div style="margin-top:12px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:5px;"><span>${filled}/${j.workers} positions filled</span><span>${pct}%</span></div>
+                <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+              </div>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>
+    </div>
+  </div>
+  ${footerHTML()}
+  `;
+}
+
+/* ============================= MANAGE APPLICANTS ============================= */
+function manageApplicantsView(){
+  const jobId = state.params.jobId;
+  const j = JOBS.find(x=>x.id===jobId);
+  if(!j) return `${navBar()}<div class="wrap section"><div class="empty-state">Job not found.</div></div>${footerHTML()}`;
+  const apps = applications.filter(a=>a.jobId===jobId);
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:36px;padding-bottom:60px;">
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:18px;" onclick="navigate('farmerDashboard')">← Back to dashboard</button>
+    <h1 style="font-size:24px;margin:0 0 4px;">${j.title}</h1>
+    <p style="color:var(--ink-soft);margin:0 0 26px;">${j.village}, ${j.district} · ₹${j.wage}/day · ${apps.length} applicant${apps.length===1?'':'s'}</p>
+    ${apps.length ? `
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      ${apps.map(a=>`
+        <div class="card" style="padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div class="avatar">${initials(a.workerName)}</div>
+          <div style="flex:1;min-width:160px;">
+            <div style="font-weight:700;font-size:14.5px;">${a.workerName}</div>
+            <div style="font-size:12.5px;color:var(--ink-soft);">Applied ${a.appliedAt}</div>
+          </div>
+          ${a.status==='pending' ? `
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary btn-sm" onclick="decideApplication(${a.id},'accepted')">${icon('check')} Accept</button>
+              <button class="btn btn-ghost btn-sm" onclick="decideApplication(${a.id},'rejected')">${icon('x')} Decline</button>
+            </div>` : `
+            <span class="badge" style="text-transform:capitalize;color:${a.status==='accepted'?'var(--green)':'var(--clay-2)'};background:transparent;border-color:${a.status==='accepted'?'var(--green)':'var(--clay-2)'};">${a.status}</span>
+          `}
+        </div>
+      `).join("")}
+    </div>` : `<div class="card empty-state"><div class="display">No applicants yet</div>Workers who apply to this job will show up here.</div>`}
+  </div>
+  ${footerHTML()}
+  `;
+}
+function decideApplication(appId, status){
+  const a = applications.find(x=>x.id===appId);
+  if(!a) return;
+  a.status = status;
+  toast(`Applicant ${status}`);
+  render();
+}
+
+/* ============================= POST JOB ============================= */
+function postJobView(){
+  return `
+  ${navBar()}
+  <div class="wrap" style="padding-top:36px;padding-bottom:60px;">
+    <div class="dash-layout">
+      ${farmerSidebar('post')}
+      <div class="card" style="padding:28px;max-width:640px;">
+        <h1 style="font-size:22px;margin:0 0 4px;">Post a new job</h1>
+        <p style="color:var(--ink-soft);font-size:14px;margin:0 0 22px;">Be clear about wage and duration — it earns more applications.</p>
+        <form onsubmit="return submitJob(event)">
+          <div class="field"><label>Job title</label><input required name="title" placeholder="e.g. Cotton pickers needed for 3 acre field"></div>
+          <div class="grid2">
+            <div class="field"><label>Category</label>
+              <select required name="category"><option value="">Select category</option>${CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>
+            </div>
+            <div class="field"><label>Wage per day (₹)</label><input required type="number" min="1" name="wage" placeholder="e.g. 450"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>State</label>
+              <select required name="state" onchange="updateDistrictOptions(this)"><option value="">Select state</option>${Object.keys(GEO).map(s=>`<option value="${s}">${s}</option>`).join("")}</select>
+            </div>
+            <div class="field"><label>District</label>
+              <select required name="district" id="district-select" onchange="updateVillageOptions(this)"><option value="">Select state first</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Village</label><select required name="village" id="village-select"><option value="">Select district first</option></select></div>
+          <div class="grid2">
+            <div class="field"><label>Workers needed</label><input required type="number" min="1" name="workers" placeholder="e.g. 6"></div>
+            <div class="field"><label>Working hours</label><input required name="hours" placeholder="e.g. 7am – 4pm"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Start date</label><input required type="date" name="start"></div>
+            <div class="field"><label>End date</label><input required type="date" name="end"></div>
+          </div>
+          <div style="display:flex;gap:20px;margin-bottom:16px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink-soft);"><input type="checkbox" name="food"> Food provided</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink-soft);"><input type="checkbox" name="stay"> Stay provided</label>
+          </div>
+          <div class="field"><label>Description</label><textarea required name="desc" rows="4" placeholder="Describe the work, experience needed, payment schedule…"></textarea></div>
+          <div class="field"><label>Contact number</label><input required name="contact" placeholder="10-digit mobile number"></div>
+          <button class="btn btn-clay btn-block" type="submit">${icon('plus')} Post job</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  ${footerHTML()}
+  `;
+}
+function submitJob(e){
+  e.preventDefault();
+  const f = e.target;
+  const district = f.district.value;
+  const newJob = {
+    id: jobIdCounter++,
+    title: f.title.value.trim(),
+    category: f.category.value,
+    state: f.state.value,
+    district,
+    taluka: district,
+    village: f.village.value,
+    wage: parseInt(f.wage.value,10),
+    workers: parseInt(f.workers.value,10),
+    start: f.start.value,
+    end: f.end.value,
+    hours: f.hours.value,
+    food: f.food.checked,
+    stay: f.stay.checked,
+    contact: f.contact.value,
+    desc: f.desc.value,
+    farmer: currentUser.name,
+    posted: "just now",
+    status: "active"
+  };
+  JOBS.unshift(newJob);
+  addNotification(`Your job "${newJob.title}" is now live`);
+  toast("Job posted!");
+  navigate('farmerDashboard');
+  return false;
+}
+
+/* ============================= RENDER ============================= */
+function render(){
+  const app = document.getElementById("app");
+  let html = "";
+  switch(state.view){
+    case "landing": html = landingView(); break;
+    case "auth": html = authView(); break;
+    case "workerDashboard": html = currentUser ? workerDashboard() : authView(); break;
+    case "browseJobs": html = currentUser ? browseJobsView() : authView(); break;
+    case "savedJobs": html = currentUser ? savedJobsView() : authView(); break;
+    case "farmerDashboard": html = currentUser ? farmerDashboard() : authView(); break;
+    case "postJob": html = currentUser ? postJobView() : authView(); break;
+    case "manageApplicants": html = currentUser ? manageApplicantsView() : authView(); break;
+    default: html = landingView();
+  }
+  app.innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>
